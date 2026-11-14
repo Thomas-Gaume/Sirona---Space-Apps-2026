@@ -1,21 +1,26 @@
 import numpy
 import rasterio
+import warnings
+from rasterio.windows import Window
+from rasterio.errors import NotGeoreferencedWarning
 
-def Altitude_read(long,lat,filename):
+# Altitude_read
+# Input
+#   long     : array of lunar longitudes [deg]
+#   lat      : array of lunar latitudes [deg]
+#   PIXEL    : pixel per degree of the map being red [pixel/deg]
+#   filename : path to source .tif file
+#
+# Output
+#   altitude : array of altitude at querried points [km]
 
-    with rasterio.open(filename) as dataset:
+def Altitude_read(long,lat,PIXEL, filename):
 
-        # Read the dataset's valid data mask as a ndarray.
-        mask = dataset.dataset_mask()
+    warnings.filterwarnings("ignore", category=NotGeoreferencedWarning)
 
-        # Extract feature shapes and values from the array.
-        for geom, val in rasterio.features.shapes(
-                mask, transform=dataset.transform):
+    with rasterio.open(filename) as src:
+        h, w = src.height, src.width
+        row = min(int((90 - lat) * PIXEL), h - 1)
+        col = min(int(long * PIXEL), w - 1)
 
-            # Transform shapes from the dataset's own coordinate
-            # reference system to CRS84 (EPSG:4326).
-            geom = rasterio.warp.transform_geom(
-                dataset.crs, 'EPSG:4326', geom, precision=6)
-
-            # Print GeoJSON shapes to stdout.
-            print(geom)
+        return src.read(1, window=Window(col, row, 1, 1))[0, 0]
