@@ -1,4 +1,4 @@
-import numpy
+import numpy as np
 import rasterio
 import warnings
 from rasterio.windows import Window
@@ -20,7 +20,12 @@ def Altitude_read(long,lat,PIXEL, filename):
 
     with rasterio.open(filename) as src:
         h, w = src.height, src.width
-        row = min(int((90 - lat) * PIXEL), h - 1)
-        col = min(int(long * PIXEL), w - 1)
+        row = np.minimum(np.round(np.multiply((90 - lat), PIXEL)), h - 1).astype(int)
+        col = np.minimum(np.round(np.multiply(long, PIXEL)), w - 1).astype(int)
 
-        return src.read(1, window=Window(col, row, 1, 1))[0, 0]
+        altitudes = np.zeros(np.size(row))
+
+        for i in range(np.size(altitudes)) :
+            altitudes[i] = src.read(1, window=Window(col[i], row[i], 1, 1))[0, 0]
+        
+        return altitudes 
