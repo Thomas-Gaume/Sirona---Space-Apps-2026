@@ -1,26 +1,19 @@
-from datetime import datetime
-import spiceypy as sp
+import json
+from api import handle_request   # api.py charge les kernels tout seul
 
-from load_kernels import load_kernels
-from calc import site_range
-from sites import sites
+if __name__ == "__main__":
+    res = handle_request({
+        "date": "22/12/2026",
+        "criteria": [
+            {"type": "illumination", "op": ">", "value": 50},
+            {"type": "illumination", "op": "<", "value": 100},
+        ],
+        "mode": "all",
+        "advanced": {"grid_step_deg": 1, "range_days": 1, "step_hours": 3},
+    })
 
-#Liste des sites dans "sites.py", c'est à titre d'exemple ça
-site_simu = "shackleton"
-date_UTC = "22/12/2026" # JJ/MM/AAAA
-days = 1   # durée de la plage en jour (0 = un seul instant)
-step_hours = 1.0
-earth_min_el = 5.0
+    with open("result.json", "w", encoding="utf-8") as f:
+        json.dump(res, f, separators=(",", ":"))
 
-
-lat, lon = sites[site_simu]
-start_utc = datetime.strptime(date_UTC, "%d/%m/%Y").strftime("%Y-%m-%d 00:00:00")
-
-
-load_kernels()
-try:
-    r = site_range(lat, lon, start_utc, days, step_hours, earth_min_el)
-finally:
-    sp.kclear()
-
-    
+    print("result.json écrit :", res["n_tested"], "points testés,",
+          res["n_matching"], "retenus")
