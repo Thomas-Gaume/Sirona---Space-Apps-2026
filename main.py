@@ -1,19 +1,19 @@
 import json
-from api import handle_request   # api.py charge les kernels tout seul
+import sys
+from spiceypy.utils.exceptions import SpiceyError
+
+from api import handle_request
+
+
+def main():
+    # La requête JSON arrive en argument ou sur stdin ; la réponse sort en JSON sur stdout
+    raw = sys.argv[1] if len(sys.argv) > 1 else sys.stdin.read()
+    try:
+        res = handle_request(json.loads(raw))
+    except (KeyError, ValueError, TypeError, AttributeError, SpiceyError) as e:
+        res = {"error": f"Requête invalide : {type(e).__name__}: {e}"}
+    print(json.dumps(res, separators=(",", ":")))
+
 
 if __name__ == "__main__":
-    res = handle_request({
-        "date": "22/12/2026",
-        "criteria": [
-            {"type": "illumination", "op": ">", "value": 50},
-            {"type": "illumination", "op": "<", "value": 100},
-        ],
-        "mode": "all",
-        "advanced": {"grid_step_deg": 1, "range_days": 1, "step_hours": 3},
-    })
-
-    with open("result.json", "w", encoding="utf-8") as f:
-        json.dump(res, f, separators=(",", ":"))
-
-    print("result.json écrit :", res["n_tested"], "points testés,",
-          res["n_matching"], "retenus")
+    main()
