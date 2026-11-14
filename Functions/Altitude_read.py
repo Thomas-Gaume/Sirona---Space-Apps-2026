@@ -21,7 +21,7 @@ def Altitude_read(long,lat,PIXEL, filename):
     with rasterio.open(filename) as src:
         h, w = src.height, src.width
         row = np.minimum(np.round(np.multiply((90 - lat), PIXEL)), h - 1).astype(int)
-        col = np.minimum(np.round(np.multiply(long, PIXEL)), w - 1).astype(int)
+        col = np.minimum(np.round(np.multiply(180 + long, PIXEL)), w - 1).astype(int)
 
         altitudes = np.zeros(np.size(row))
 
