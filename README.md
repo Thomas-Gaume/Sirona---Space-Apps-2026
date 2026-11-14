@@ -32,10 +32,9 @@ Space Apps 2026 Milano
 
 Process
 1. Éphémérides
-2. UI 2D simple
+2. UI 3D
 3. . datasets simples (sites notables, illumination, minéralogie, géologie...)
 4. Comparaison sites (à la RPG)
-5. UI 3D
 6. Algo recherche
 7. Algo recherche + complexe (inclus plage temps)
 8. Plus de dataset
