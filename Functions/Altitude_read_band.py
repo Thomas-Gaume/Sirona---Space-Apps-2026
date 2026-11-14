@@ -28,13 +28,14 @@ def Altitude_read_band(long,lat,pixel_num,PIXEL, filename):
         row = np.minimum(np.round(np.multiply((90 - lat), PIXEL)), h - 1).astype(int)
         col = np.minimum(np.round(np.multiply(180 + long, PIXEL)), w - 1).astype(int)
 
-        #Read altitudes at given points
-        n = min(pixel_num, w - col)      # pixels available before the right edge
-        altitudes = src.read(1, window=Window(col[0], row[0], n, 1))[0]
+        start = col - pixel_num + 1          # westernmost pixel of the run
 
-        if n < pixel_num:                # run crosses the longitude seam
-            wrapped = src.read(1, window=Window(0, row[0], pixel_num - n, 1))[0]
-            altitudes = np.concatenate([altitudes, wrapped])
+        if start >= 0:
+            run = src.read(1, window=Window(start[0], row[0], pixel_num, 1))[0]
+        else:                                # run crosses the longitude seam
+            k = -start                       # pixels that wrap to the right edge
+            part = src.read(1, window=Window(0, row[0], col[0] + 1, 1))[0]
+            wrapped = src.read(1, window=Window(w - k, row[0], k, 1))[0]
+            run = np.concatenate([wrapped, part])
 
-        
-        return altitudes 
+        return run[::-1]
