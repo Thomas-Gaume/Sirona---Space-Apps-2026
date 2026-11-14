@@ -14,17 +14,21 @@ from rasterio.errors import NotGeoreferencedWarning
 # Output
 #   altitude : array of altitude at querried points [km]
 
-def Altitude_read(long,lat,PIXEL, filename):
+def Altitude_read_band(long,lat,PIXEL, filename):
 
     warnings.filterwarnings("ignore", category=NotGeoreferencedWarning)
 
     with rasterio.open(filename) as src:
+        
+        #read pixel height and width of the map
         h, w = src.height, src.width
         row = np.minimum(np.round(np.multiply((90 - lat), PIXEL)), h - 1).astype(int)
-        col = np.minimum(np.round(np.multiply(long, PIXEL)), w - 1).astype(int)
+        col = np.minimum(np.round(np.multiply(180 + long, PIXEL)), w - 1).astype(int)
 
+        #Read altitudes at given points
         altitudes = np.zeros(np.size(row))
 
+        #Read altitudes at given points
         for i in range(np.size(altitudes)) :
             altitudes[i] = src.read(1, window=Window(col[i], row[i], 1, 1))[0, 0]
         
