@@ -1,7 +1,9 @@
-from sites import sites
 from load_kernels import load_kernels
+from query import find_locations, time_series
+from sites import sites
 
 _kernels_loaded = False
+
 
 def _ensure_kernels():
     # Charge les kernels une seule fois pour tout le programme
@@ -10,27 +12,29 @@ def _ensure_kernels():
         load_kernels()
         _kernels_loaded = True
 
+
+def _normalize(req):
+    req = dict(req)
+    if "criteria" not in req and "criterion" in req:        # ancien format
+        req["criteria"] = [req.pop("criterion")]
+
+    names = req.pop("sites", None)
+    if names is not None:
+        if not isinstance(names, list) or not names:
+            raise ValueError("'sites' doit être une liste non vide de noms")
+        unknown = [s for s in names if s not in sites]
+        if unknown:
+            raise ValueError(f"Sites inconnus : {unknown} (disponibles : {sorted(sites)})")
+        req["points"] = list(req.get("points") or []) + [
+            dict(name=s, lat=sites[s][0], lon=sites[s][1]) for s in names]
+    return req
+
+
 def handle_request(req: dict) -> dict:
+    if not isinstance(req, dict):
+        raise ValueError("La requête doit être un objet JSON")
+    req = _normalize(req)
     _ensure_kernels()
-
-    if "criteria" in req or "points" in req:# recherche par lat/lon
-        from query import find_locations
-        return find_locations(req)
-
-    from query import check 
-    c = req["criterion"]                       # {"type": "illumination", "op": ">", "value": 50}
-    date = req["date"]                         # "JJ/MM/AAAA"
-    mode = req.get("mode", "any")              # "any" | "all" | "at"
-    step = req.get("advanced", {}).get("step_hours", 1.0)
-    candidates = req.get("sites") or list(sites)   # par défaut : tous les sites
-
-    unknown = [s for s in candidates if s not in sites]
-    if unknown:
-        raise ValueError(f"Sites inconnus : {unknown}")
-
-    results = {s: check(s, date, c["type"], c["op"], c["value"], mode, step)
-               for s in candidates}
-
-    return dict(date=date, criterion=c, mode=mode,
-                results=results,                                   # {"apollo11": True, ...}
-                matching_sites=[s for s, ok in results.items() if ok])
+    if "criteria" in req:
+        return find_locations(req)   # mode 2 : critères -> true/false à chaque instant
+    return time_series(req)          # mode 1 : points + date -> propriétés à chaque instant
