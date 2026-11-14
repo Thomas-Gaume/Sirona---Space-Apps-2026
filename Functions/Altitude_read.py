@@ -1,7 +1,7 @@
 import numpy
 import rasterio
 
-def function(long,lat,filename):
+def Altitude_read(long,lat,filename):
 
     with rasterio.open(filename) as dataset:
 
